@@ -1,0 +1,12 @@
+{
+  "name": "imposteurs-manoir-3d",
+  "version": "1.13.0",
+  "description": "Jeu multijoueur 3D avec salons et visibilité locale",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

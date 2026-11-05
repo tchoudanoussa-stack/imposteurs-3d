@@ -1,0 +1,187 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#080d19"><title>Imposteurs Manoir 3D</title>
+<style>
+:root{--bg:#080d19;--panel:#111b2e;--line:#2c4265;--blue:#668cff;--txt:#edf4ff;--muted:#9db2d7}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 20% 0,#1a2d4c 0,#080d19 55%);color:var(--txt);font:15px Inter,Segoe UI,Arial,sans-serif}
+#game{position:fixed;inset:0;display:none}canvas{display:block}
+.panel{background:linear-gradient(145deg,#15233beF,#0d1629f2);border:1px solid #30486d;border-radius:16px;padding:20px;box-shadow:0 20px 60px #0007, inset 0 1px #ffffff0b;backdrop-filter:blur(14px)}
+#login{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(460px,92vw)}
+.logo{font-size:25px;font-weight:900;letter-spacing:1px;margin-bottom:6px}.logo span{color:#79a2ff}
+.tag{display:inline-block;border:1px solid #3e5680;background:#20345a;color:#aecdff;border-radius:30px;padding:5px 10px;font-size:11px;font-weight:700}
+p{color:var(--muted);line-height:1.55}label{display:block;margin:15px 0 7px;color:#b7c9e8;font-size:13px}
+input{width:100%;padding:13px 14px;border-radius:10px;border:1px solid #344b70;background:#0a1427;color:white;outline:none}input:focus{border-color:#7299ff;box-shadow:0 0 0 3px #6288ff25}
+button{padding:12px 16px;border:0;border-radius:10px;background:linear-gradient(135deg,#7195ff,#4269e8);color:white;font-weight:800;cursor:pointer;box-shadow:0 8px 22px #4269e830}button:hover{filter:brightness(1.08);transform:translateY(-1px)}#join{width:100%;margin-top:18px}
+#hud{position:fixed;z-index:4;top:16px;left:16px;min-width:260px;padding:15px 18px}
+#votePanel{position:fixed;z-index:5;left:50%;top:50%;transform:translate(-50%,-50%);width:min(390px,92vw);max-height:82vh;overflow:auto;text-align:center}.colorVote{display:inline-block;margin:5px;padding:10px 12px;min-width:100px;border:2px solid #ffffff88;box-shadow:0 3px 12px #0008;text-shadow:0 1px 3px #000;transition:transform .1s}.colorVote:hover{transform:scale(1.06);outline:3px solid white}
+#taskHud{position:fixed;z-index:4;right:16px;top:16px;width:220px;padding:13px 15px;font-size:13px}#status{color:#9dbaff;font-size:13px;margin-top:8px}#toast{font-size:13px;color:#ffe08a;margin-top:7px;max-width:290px}
+#help{z-index:4;position:fixed;right:16px;bottom:16px;width:min(350px,90vw);font-size:13px;color:#b9c9e5;line-height:1.7;opacity:.94;transition:opacity .2s;max-height:30vh;overflow:auto}#help:hover{opacity:1}
+kbd{display:inline-block;background:#1b2b48;border:1px solid #425b82;border-bottom-width:2px;border-radius:5px;padding:2px 6px;color:#fff;font:11px monospace}
+#powerAlert{position:fixed;z-index:30;top:50%;left:50%;transform:translate(-50%,-50%) scale(.94);opacity:0;pointer-events:none;padding:22px 34px;border-radius:18px;border:2px solid #ffd36b;background:rgba(7,16,31,.96);color:#fff1bf;font-size:clamp(24px,4vw,46px);font-weight:1000;letter-spacing:2px;text-align:center;text-shadow:0 3px 20px #ff9d35;box-shadow:0 18px 70px #000b;transition:opacity .18s,transform .18s}#powerAlert.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#powerAlert.ok{border-color:#65e6a4;color:#d6ffe9;text-shadow:0 3px 20px #2fd68a}
+#radarWrap{position:fixed;z-index:6;right:16px;top:150px;width:min(290px,calc(100vh - 150px - 34vh - 36px));min-width:170px;padding:8px;border:1px solid #607ba8;border-radius:14px;background:#071326f2;box-shadow:0 8px 30px #0009;cursor:pointer;text-align:center}
+#radarWrap.alert{border-color:#ffd36b;box-shadow:0 0 0 2px #ffd36b66,0 8px 30px #0009}
+#radarCanvas{display:block;width:100%;height:auto;aspect-ratio:1;border-radius:8px}
+#radarHint{font-size:11px;color:#b8c9e8;margin-top:5px}
+#radarWrap.expanded{top:50%;right:50%;width:min(86vh,86vw,820px);transform:translate(50%,-50%);padding:14px;z-index:15}
+#radarWrap.expanded #radarHint{font-size:14px}
+#verdictBox{white-space:pre-line;position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;text-align:center;padding:20px;font-size:clamp(34px,7vw,96px);font-weight:1000;letter-spacing:3px;pointer-events:none;color:#fff;text-shadow:0 6px 30px #000}
+#verdictBox.show{display:flex}#verdictBox.elim{background:rgba(190,10,30,.88);color:#fff0f0}#verdictBox.none{background:rgba(20,30,50,.88);color:#dbe8ff}
+#endScreen{position:fixed;inset:0;z-index:50;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;text-align:center;overflow:auto}
+#endScreen.crew{background:radial-gradient(ellipse at 50% 30%,#1d5a46f2,#06161ff7)}#endScreen.imp{background:radial-gradient(ellipse at 50% 30%,#7a1226f2,#1a0509f7)}
+#endScreen h1{margin:0;font-size:clamp(30px,6vw,68px);letter-spacing:3px;text-shadow:0 6px 30px #000}#endScreen p{margin:0;color:#e6efff;font-size:clamp(14px,2vw,20px)}
+#endScreen .row{display:flex;flex-wrap:wrap;justify-content:center;gap:18px;margin:14px 0}#endScreen .fig{display:flex;flex-direction:column;align-items:center;gap:3px}
+#endScreen .fig svg{width:70px;height:98px;filter:drop-shadow(0 6px 10px #000a)}#endScreen .fig.big svg{width:110px;height:154px;animation:hop 1.1s ease-in-out infinite alternate}
+#endScreen .fig.big b{font-size:20px}#endScreen .fig small{color:#dbe8ff;font-size:12px}#endScreen .fig.dead svg{opacity:.55}#endScreen .row.lose{opacity:.6;gap:12px}#endScreen .lbl{font-size:12px;letter-spacing:2px;color:#b9c9e5}
+#endScreen .btns{display:flex;gap:10px;margin-top:10px}@keyframes hop{to{transform:translateY(-12px)}}
+#rules{position:fixed;z-index:11;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,94vw);max-height:86vh;display:none;overflow:auto}#rules .rbody{margin:10px 0}#rules h4{margin:12px 0 4px;color:#aecdff}#rules p{margin:0;color:#dbe8ff;font-size:14px}#lobbyRules{width:100%}
+#quitBtn{position:fixed;z-index:8;bottom:10px;left:50%;transform:translateX(-50%);padding:8px 16px;font-size:12px;background:linear-gradient(135deg,#e2495f,#a91f36);box-shadow:0 6px 18px #a91f3640}#quitBtn:hover{transform:translateX(-50%) translateY(-1px)}
+#repairBox{position:fixed;z-index:7;bottom:62px;left:50%;transform:translateX(-50%);min-width:270px;text-align:center;border-color:#ffd36b}
+#repairBox .bar{height:12px;margin-top:9px;background:#263954;border-radius:9px;overflow:hidden}#repairBox .bar div{height:100%;background:#ffd36b}
+select{width:100%;padding:11px 12px;border-radius:10px;border:1px solid #344b70;background:#0a1427;color:#fff;font-size:14px;outline:none}select:disabled{opacity:.7}select:focus{border-color:#7299ff}#mapPick{text-align:left}#mapPick label{margin:6px 0}#mapDesc{margin:6px 0 0;font-size:12px}#endScreen select{width:auto;min-width:200px;margin-left:8px}
+#killcam{position:fixed;inset:0;z-index:70;display:none;background:#000;pointer-events:none}#kcNoise{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}#kcScene{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(88vw,calc(80vh*16/9));aspect-ratio:16/9;border:3px solid #000;box-shadow:0 0 60px #000}
+
+/* ---- Réunion : gros chat à gauche, joueurs à droite, page de résultat du vote ---- */
+#meetingBack{position:fixed;inset:0;z-index:20;display:none;background:radial-gradient(ellipse at 50% 40%,rgba(14,24,48,.9),rgba(3,6,14,.95))}
+body.meeting #meetingBack{display:block}
+body.meeting #hud,body.meeting #help,body.meeting #taskHud,body.meeting #radarWrap,body.meeting #quitBtn,body.meeting #banner{display:none!important}
+body.meeting #chatbox{left:3vw;top:6vh;bottom:auto;width:min(62vw,820px);height:88vh;z-index:22;display:flex;flex-direction:column}
+body.meeting #chatlog{flex:1;height:auto;font-size:16px;line-height:1.6;background:#0a1224aa;border:1px solid #263954;border-radius:10px;padding:10px 12px}
+body.meeting #chatinput{font-size:16px;padding:12px}body.meeting #chatcontrols button{font-size:13px;padding:12px 16px}
+body.meeting #votePanel{left:auto;right:3vw;top:6vh;transform:none;width:min(32vw,430px);max-height:88vh;z-index:22}
+#votePanel .mtitle{font-weight:900;letter-spacing:1px;font-size:17px}#votePanel .mtimer{font-size:30px;font-weight:900;margin:4px 0;color:#ffd36b}#votePanel .minfo{font-size:13px;color:#b9c9e5;margin-bottom:10px}
+.mgrid{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;margin-bottom:8px}
+.mcard{display:flex;flex-direction:column;align-items:center;width:88px;padding:7px 4px 5px;border:2px solid #30486d;border-radius:12px;background:#0d1629;transition:transform .1s}
+.mcard svg{width:44px;height:62px;filter:drop-shadow(0 3px 4px #000a)}.mcard small{font-size:11px;max-width:80px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+.mcard.me{border-color:#668cff}.mcard.click{cursor:pointer;border-color:#8fb0ff}.mcard.click:hover{transform:scale(1.08);border-color:#fff;background:#1b2b48}.mcard.cand{border-color:#ff6b7f}
+#voteReveal{position:fixed;inset:0;z-index:45;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,#0e1830,#03060e)}
+.vrbox{width:min(640px,94vw);max-height:92vh;overflow:auto;text-align:center}.vrtitle{font-size:clamp(22px,4vw,38px);font-weight:1000;letter-spacing:3px;margin-bottom:16px}
+.vrrows{display:flex;flex-direction:column;gap:8px}.vrrow{display:flex;align-items:center;justify-content:center;gap:14px;padding:6px 12px;border-radius:12px;background:#111b2e;border:1px solid #30486d;opacity:0;animation:vrin .4s forwards}
+@keyframes vrin{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
+.vp{display:flex;align-items:center;gap:8px;min-width:150px;font-size:15px}.vp svg{width:30px;height:42px}.vpx{opacity:.75;justify-content:center}.vrarrow{color:#9db2d7;font-size:20px}
+.vrtally{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:18px}.vchip{display:flex;align-items:center;gap:6px;padding:6px 12px;border:2px solid #4a6288;border-radius:30px;background:#111b2e;font-size:20px}.vchip svg{width:24px;height:34px}
+#err{color:#ff9cab;font-size:13px;margin-top:10px}
+
+#role{margin-top:8px;font-size:14px}.r-Imposteur{color:#ff6b7f}.r-Imposteur3{color:#ff9d4a}.r-Ferreur{color:#ff9d4a}.r-Métamorphe{color:#d58bff}.r-Invisible{color:#9fb4ff}.r-Traceur{color:#7be0ff}.r-Infirmier{color:#7dffb0}.r-Angegardien{color:#fff3a8}.r-Influenceur{color:#ffb3e6}.r-Juge{color:#ffd36b}.r-Joueur{color:#edf4ff}
+#abilities{margin-top:8px;font-size:13px;color:#b9c9e5;line-height:1.8}.ok{color:#7dffb0;font-weight:700}
+button.small{padding:8px 12px;font-size:12px;margin-top:10px;margin-right:6px}button.ghost{background:#20345a;box-shadow:none}
+#vignette{position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(2,5,13,.38) 100%)}
+#visionMask{position:fixed;inset:0;pointer-events:none;z-index:2;background:radial-gradient(circle at 50% 50%,transparent 0 36vmin,rgba(2,5,13,.58) 40vmin,rgba(2,5,13,.94) 44vmin,#02050d 49vmin);mix-blend-mode:normal}
+#chatbox{position:fixed;left:16px;bottom:16px;width:min(330px,88vw);z-index:4}#chatlog{height:110px;overflow:auto;font-size:12px;color:#dce8ff;margin:8px 0;text-shadow:0 1px 2px #000;word-break:break-word}#chatcontrols{display:flex;gap:5px}#chatcontrols input{min-width:0;padding:8px}#chatcontrols button{padding:8px;font-size:11px}
+#banner{position:fixed;top:16px;left:50%;transform:translateX(-50%);width:max-content;max-width:min(560px,56vw);display:none;padding:10px 18px;border-radius:12px;background:#5b1626e6;border:1px solid #ff6b7f;color:#ffe3e8;font-weight:800;text-align:center;line-height:1.6}
+#countdown{position:fixed;z-index:50;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(5,10,20,.65);pointer-events:none;color:#fff;text-align:center}#countdown b{font-size:min(38vw,260px);line-height:1;color:#ffd34d;text-shadow:0 0 40px #ff914d}#countdown span{font-size:20px;letter-spacing:.2em;color:#aecdff}
+#judgeChoice{position:fixed;z-index:30;left:50%;top:50%;transform:translate(-50%,-50%);width:min(340px,90vw);display:none;text-align:center}#judgeChoice button{width:100%;margin:4px 0}
+#lobby{position:fixed;z-index:10;left:50%;top:50%;transform:translate(-50%,-50%);width:min(430px,92vw);max-height:88vh;overflow:auto;display:none;flex-direction:column;gap:8px;text-align:center}#lobby h2{margin:8px 0 0}#lobbyCount{font-size:22px;font-weight:900;color:#aecdff}#roster{text-align:left;border:1px solid #30486d;border-radius:10px;padding:8px 12px;max-height:190px;overflow:auto}.rosterrow{display:flex;justify-content:space-between;padding:7px 2px;border-bottom:1px solid #263954}.rosterrow:last-child{border:0}.wait{color:#ffd37a}.lobbynote{font-size:12px;margin:2px 0}#lobby button{width:100%}#settings{position:fixed;z-index:12;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,92vw);display:none}
+#settings .row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:8px 0}#settings .row label{margin:0;flex:1}#settings .row input{width:90px;padding:8px 10px}
+#setnote{margin:6px 0 10px;font-size:12px}
+
+/* ================= Adaptation écran / téléphone ================= */
+html,body{height:100%;overflow:hidden;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;touch-action:manipulation}
+body{-webkit-user-select:none;user-select:none}input,select{-webkit-user-select:text;user-select:text}
+#game{height:100dvh}
+#login{max-height:96dvh;overflow:auto}#settings{max-height:92dvh;overflow:auto}
+@media (hover:none){button:hover{filter:none;transform:none}#quitBtn:hover{transform:translateX(-50%)}.colorVote:hover,.mcard.click:hover{transform:none}}
+input,select{font-size:16px}
+
+/* Commandes tactiles */
+#touchUI{display:none}
+html.touch #touchUI{display:block}
+html.touch #help{display:none!important}
+#touchUI .stick,#stick{position:fixed;z-index:9;left:max(18px,env(safe-area-inset-left));bottom:max(18px,env(safe-area-inset-bottom));width:128px;height:128px;border-radius:50%;background:radial-gradient(circle,#ffffff14,#ffffff08 70%);border:2px solid #ffffff40;touch-action:none;display:none}
+#knob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a9c2ff,#4d70e6);box-shadow:0 4px 14px #0009;pointer-events:none;transition:transform .04s}
+#touchActions{position:fixed;z-index:9;right:max(14px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));width:224px;display:none;flex-direction:row-reverse;flex-wrap:wrap-reverse;gap:6px;justify-content:flex-start;align-content:flex-start;touch-action:none}
+#touchMisc{position:fixed;z-index:9;left:max(18px,env(safe-area-inset-left));bottom:calc(max(18px,env(safe-area-inset-bottom)) + 140px);display:none;gap:8px}
+.tbtn{width:52px;height:52px;padding:0;border-radius:50%;border:2px solid #ffffff55;background:rgba(17,27,46,.72);box-shadow:0 4px 12px #0008;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;color:#fff;touch-action:none}
+.tbtn span{font-size:21px}.tbtn small{font-size:9px;font-weight:700;margin-top:2px;opacity:.9}
+.tbtn.imp{background:rgba(110,20,36,.78);border-color:#ff8a9a}
+.tbtn.down{background:#4269e8;transform:scale(.92)}.tbtn.imp.down{background:#c8334b}
+#chatToggle,#fsToggle{width:42px;height:42px;font-size:19px;background:rgba(17,27,46,.72)}
+#rotateHint{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;text-align:center;background:rgba(5,10,20,.94);color:#fff}
+#rotateHint p{margin:6px 0 14px}
+body.meeting #touchUI{display:none!important}
+
+/* Petit écran en hauteur (téléphone en paysage) */
+@media (max-height:520px){
+ .panel{padding:10px 12px;border-radius:12px}
+ #login{width:min(520px,94vw);padding:12px 16px}#login .tag,#login>p{display:none}.logo{font-size:20px;margin-top:0!important}
+ #login label{margin:8px 0 4px;font-size:12px}#login input{padding:8px 10px}#join{margin-top:10px;padding:10px}
+ #hud{top:max(6px,env(safe-area-inset-top));left:max(6px,env(safe-area-inset-left));min-width:0;width:min(210px,32vw);padding:8px 10px;font-size:12px}
+ #hud #status,#hud #toast{font-size:11px;margin-top:4px}#role{font-size:12px;margin-top:4px}#abilities{font-size:11px;line-height:1.5;margin-top:4px}
+ #hud button.small{padding:6px 8px;margin-top:6px;font-size:11px}
+ #taskHud{top:max(6px,env(safe-area-inset-top));right:max(6px,env(safe-area-inset-right));width:150px;padding:8px 10px;font-size:11px}
+ #taskHud small{display:none!important}
+ #radarWrap{top:78px;right:max(6px,env(safe-area-inset-right));width:min(26vh,130px);min-width:90px;padding:4px;border-radius:10px}#radarHint{display:none}
+ #radarWrap.expanded{padding:8px}
+ #quitBtn{bottom:6px;padding:6px 12px;font-size:11px}
+ #repairBox{bottom:50px;min-width:200px;padding:8px 12px;font-size:12px}
+ #banner{top:6px;font-size:12px;padding:6px 12px;max-width:44vw}
+ #powerAlert{padding:10px 18px;font-size:clamp(18px,5vw,30px)}
+ body:not(.meeting) #chatbox{display:none}
+ body:not(.meeting).chatopen #chatbox{display:block;left:50%;transform:translateX(-50%);bottom:max(6px,env(safe-area-inset-bottom));width:min(62vw,420px);z-index:12}
+ body:not(.meeting) #chatlog{height:70px}
+ #lobby{width:min(600px,94vw);max-height:94dvh;gap:5px;padding:10px 14px}#lobby h2{margin:2px 0;font-size:17px}#lobby .lobbynote,#lobby .tag{display:none}#roster{max-height:76px}#lobby button{padding:9px}
+ #rules,#settings,#votePanel,#judgeChoice{max-height:92dvh}#rules{width:min(640px,94vw)}#rules p{font-size:13px}
+ #settings .row{margin:4px 0}#settings .row input{padding:6px 8px}
+ /* Réunion */
+ body.meeting #chatbox{left:2vw;top:3dvh;width:58vw;height:94dvh}
+ body.meeting #chatlog{font-size:14px}body.meeting #chatinput{font-size:16px;padding:8px}body.meeting #chatcontrols button{font-size:12px;padding:8px 10px}
+ body.meeting #votePanel{right:2vw;top:3dvh;width:37vw;max-height:94dvh;padding:8px}
+ #votePanel .mtitle{font-size:14px}#votePanel .mtimer{font-size:22px;margin:0}#votePanel .minfo{font-size:11px;margin-bottom:4px}
+ .mcard{width:66px;padding:4px 2px 3px}.mcard svg{width:30px;height:42px}.mcard small{font-size:10px;max-width:60px}
+ .colorVote{min-width:80px;padding:7px 8px}
+ .vrbox{padding:12px}.vrtitle{margin-bottom:8px}.vrrow{padding:3px 10px}.vp svg{width:22px;height:30px}.vp{font-size:13px}.vchip{font-size:15px;padding:3px 9px}
+ #endScreen{gap:4px;padding:10px}#endScreen .row{margin:6px 0;gap:10px}#endScreen .fig svg{width:44px;height:62px}#endScreen .fig.big svg{width:70px;height:98px}#endScreen .fig.big b{font-size:16px}
+ #kcScene{width:min(88vw,calc(86dvh*16/9))}
+}
+@media (max-height:520px) and (max-width:700px){#taskHud{width:120px}#hud{width:min(170px,34vw)}#touchActions{width:176px}.tbtn{width:44px;height:44px}.tbtn span{font-size:18px}.tbtn small{font-size:8px}#stick{width:108px;height:108px}#touchMisc{bottom:calc(max(18px,env(safe-area-inset-bottom)) + 120px)}}
+/* Portrait */
+@media (orientation:portrait) and (max-width:600px){
+ #hud{min-width:0;width:min(220px,56vw);left:8px;top:8px;padding:10px 12px;font-size:13px}
+ #taskHud{width:min(150px,38vw);right:8px;top:8px}
+ #radarWrap{top:90px;width:min(120px,30vw);min-width:90px;right:8px}
+ body.meeting #chatbox{left:3vw;top:3dvh;width:94vw;height:44dvh}
+ body.meeting #votePanel{left:3vw;right:auto;top:49dvh;width:94vw;max-height:48dvh}
+}
+</style></head><body>
+<div id="login" class="panel"><div class="tag">PROTOYPE MULTIJOUEUR · 3D</div><div class="logo" style="margin-top:13px">🕯 IMPOSTEURS <span>MANOIR</span></div>
+<p>Explore le terrain, retrouve les autres joueurs et méfie-toi des imposteurs. L'hôte choisit le terrain (manoir, laboratoire, vaisseau, château) dans le salon.</p>
+<label>Ton pseudo</label><input id="name" value="Joueur" maxlength="16" placeholder="Pseudo">
+<label>Nombre de joueurs requis (4 à 10)</label><input id="capacity" type="number" min="4" max="10" value="6">
+<label>Code du salon <span style="color:#7186a8">(vide = nouveau salon)</span></label><input id="code" placeholder="ex. G633">
+<button id="join">ENTRER DANS LE MANOIR　➜</button><div id="err"></div></div>
+<div id="game"><div id="hud" class="panel"><b>🕯 IMPOSTEURS <span style="color:#78a0ff">MANOIR 3D</span></b><div id="status">Connexion…</div><div id="role"></div><div id="abilities"></div><div id="toast"></div>
+<button id="start" class="small" style="display:none">Lancer la partie</button><button id="openSettings" class="small ghost">⚙ Réglages (O)</button><button id="musicBtn" class="small ghost">🔊 Musique</button></div>
+<div id="vignette"></div><div id="visionMask"></div><div id="powerAlert"></div><div id="banner"></div>
+<div id="countdown"><span>LA PARTIE COMMENCE</span><b>5</b></div>
+<div id="lobby" class="panel">
+ <div class="tag">SALON MULTIJOUEUR</div><h2>Préparation de la partie</h2>
+ <p>Code à partager : <strong id="lobbyCode"></strong></p>
+ <div id="lobbyCount" class="lobbycount">0 / 6 joueurs</div>
+ <div id="roster"></div>
+ <div id="mapPick"><label for="mapSelect">🗺 Terrain de jeu</label><select id="mapSelect"></select><p id="mapDesc" class="lobbynote"></p></div>
+ <p id="lobbyHint">En attente des joueurs…</p>
+ <button id="ready">Je suis prêt</button>
+ <button id="lobbyLaunch" class="small" style="display:none">Lancer la partie</button>
+ <button id="lobbyRules" class="small ghost">📜 Voir les règles</button>
+ <button id="lobbySettings" class="small ghost" style="display:none">Configurer le salon</button>
+ <p class="lobbynote">La carte et les déplacements restent bloqués jusqu'au lancement officiel par l'hôte.</p>
+</div>
+<div id="rules" class="panel"><b style="font-size:18px">📜 RÈGLES DU JEU</b>
+<div class="rbody">
+<h4>But du jeu</h4>
+<p><b>Joueurs normaux :</b> accomplir toutes les <b>tâches</b> de réparation (200 par défaut, réglable par l'hôte) : approche-toi d'un objet cassé et appuie sur <kbd>G</kbd> ou éliminer tous les imposteurs par le vote.<br><b>Imposteurs :</b> éliminer les autres joueurs sans se faire démasquer.</p>
+<h4>Déplacements et vision</h4>
+<p>Flèches ou ZQSD/WASD. Tu ne vois que les joueurs proches de toi. Seuls les imposteurs et les joueurs éliminés (fantômes) peuvent courir (<kbd>SHIFT</kbd>). La carte du manoir (touche <kbd>M</kbd>) montre le nom de chaque pièce.</p>
+<h4>Corps, réunions et votes</h4>
+<p><kbd>E</kbd> signale un corps. <kbd>B</kbd> lance une réunion (buzzer). La réunion a trois phases : discussion, vote (survole une couleur), puis décision du juge. Un message du chat s'affiche dans la couleur de son auteur. Après le vote, un écran annonce qui est éliminé.</p>
+<h4>Panne de courant</h4>
+<p>Un imposteur coupe le courant (<kbd>S</kbd>) : la lumière des autres joueurs diminue et une route verte mène au tableau électrique. Maintiens <kbd>R</kbd> pendant 3 secondes près du tableau pour réparer. Les imposteurs gardent leur lumière.</p>
+<h4>Les imposteurs</h4>
+<p><kbd>F</kbd> tuer · <kbd>S</kbd> couper le courant · <kbd>D</kbd> fermer les portes · <kbd>X</kbd> canalisations (cercles noirs). Chaque imposteur a un rôle : <b>Ferreur</b> (<kbd>V</kbd> ferme la salle où il est), <b>Métamorphe</b> (<kbd>C</kbd> prend l'apparence d'un joueur proche pendant 10 s) ou <b>Invisible</b> (<kbd>I</kbd> devient invisible 10 s et peut tuer).</p>
+<h4>Autres rôles</h4>
+<p><b>Traceur</b> (<kbd>T</kbd>) voit tout le monde un court instant. <b>Infirmier</b> (<kbd>N</kbd>) contacte un corps signalé. <b>Ange gardien</b> (joueur éliminé) : s\'approche d\'un vivant et appuie sur <kbd>P</kbd> pour le protéger 30 s. <b>Influenceur</b> (joueur éliminé) : près d\'un vivant, <kbd>P</kbd> affiche la liste d\'objets colorés, <kbd>1</kbd>-<kbd>5</kbd> pour choisir celui de la couleur de son meurtrier, <kbd>P</kbd> encore pour valider et l\'envoyer. Les deux peuvent utiliser les canalisations (<kbd>X</kbd>). <b>Juge</b> confirme ou non l'élimination après le vote : une erreur l'élimine.</p>
+</div>
+<button id="closeRules" class="small">Fermer</button></div>
+<button id="quitBtn">🚪 Quitter la partie</button>
+<div id="chatbox" class="panel"><b>💬 COMMUNICATION</b><div id="chatlog"></div><div id="chatcontrols"><input id="chatinput" maxlength="180" placeholder="Message…"><button id="chatsend">Envoyer</button></div></div>
+<div id="settings" class="panel"><b>⚙ RÉGLAGES</b><p id="setnote">Temps en secondes. Seul l'hôte (premier arrivé dans le salon) peut modifier.</p><div id="setfields"></div><button id="saveSettings" class="small">Enregistrer</button><button id="closeSettings" class="small ghost">Fermer</button></div>
+<div id="help" class="panel"><b>COMMANDES</b><br>Les commandes propres à ton rôle apparaîtront ici après le lancement.</div></div>
+<script type="module" src="/game.js"></script><script src="/mobile.js" defer></script></body></html>
